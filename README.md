@@ -4,4 +4,4 @@ This project is about screen  of your mobile device to compute using via USB cab
 Adding more features in it. 
 For scrcpy follow the link and download the file and extract it to given repo. 
 Rename the folder to scrcpy and continue. 
-
+https://sourceforge.net/projects/scrcpy.mirror/files/
