@@ -83,10 +83,10 @@ def main():
         shutil.rmtree(scrcpy_dest_dir, ignore_errors=True)
 
     def ignore_patterns(dir, files):
-        # Ignore git, gradle, and python cache residue
+        # Ignore git, gradle, build scripts, documentation, and unneeded source trees
         ignored = []
         for f in files:
-            if f in [".gradle", ".github", "__pycache__", "gradle"] or f.endswith((".py", ".gradle", ".sh", ".bat")):
+            if f in [".gradle", ".github", "__pycache__", "gradle", "server", "app", "doc", "release", "config", "assets"] or f.endswith((".py", ".gradle", ".sh", ".bat")):
                 if f not in ["open_a_terminal_here.bat", "scrcpy-console.bat"]:
                     ignored.append(f)
         return ignored
@@ -106,16 +106,53 @@ def main():
 
     print("\n" + "=" * 65)
     if os.path.exists(exe_target):
-        print("  [+] BUILD COMPLETE! STANDALONE WINDOWS APP READY!")
+        bundle_mb = sum(os.path.getsize(os.path.join(r, f)) for r, _, fs in os.walk(output_app_dir) for f in fs) // (1024 * 1024)
+        print("  [+] STANDALONE WINDOWS APP READY!")
         print(f"  Target Executable: {exe_target}")
-        print(f"  Total Bundle Size: {sum(os.path.getsize(os.path.join(r, f)) for r, _, fs in os.walk(output_app_dir) for f in fs) // (1024 * 1024)} MB")
+        print(f"  Total Bundle Size: {bundle_mb} MB")
         print("=" * 65)
-        print("\nYou can now distribute the folder:")
-        print(f"  {output_app_dir}")
-        print("or zip it for instant portable use on any Windows PC without Python!")
+
+        # 8. Compile Inno Setup Installation Wizard (.exe)
+        iss_file = os.path.join(base_dir, "installer.iss")
+        if os.path.exists(iss_file):
+            print("\n[*] Looking for Inno Setup compiler (ISCC)...")
+            iscc_exe = shutil.which("iscc") or shutil.which("ISCC.exe")
+            if not iscc_exe:
+                candidates = [
+                    os.path.expandvars(r"%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe"),
+                    r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+                    r"C:\Program Files\Inno Setup 6\ISCC.exe",
+                    r"C:\Program Files (x86)\Inno Setup 5\ISCC.exe",
+                    r"C:\Program Files\Inno Setup 5\ISCC.exe",
+                ]
+                for c in candidates:
+                    if os.path.exists(c):
+                        iscc_exe = c
+                        break
+
+            if iscc_exe:
+                print(f"[+] Found Inno Setup: {iscc_exe}")
+                print("[*] Compiling Installation Wizard EXE...")
+                res = subprocess.run([iscc_exe, iss_file], cwd=base_dir)
+                if res.returncode == 0:
+                    out_dir = os.path.join(base_dir, "installer_output")
+                    print("\n" + "=" * 65)
+                    print("  [+] INSTALLATION WIZARD EXE CREATED SUCCESSFULLY!")
+                    if os.path.exists(out_dir):
+                        for f in os.listdir(out_dir):
+                            if f.endswith(".exe"):
+                                f_path = os.path.join(out_dir, f)
+                                sz = os.path.getsize(f_path) / (1024 * 1024)
+                                print(f"  Installer: {f_path} ({sz:.2f} MB)")
+                    print("=" * 65)
+                else:
+                    print(f"[-] Inno Setup exited with code {res.returncode}")
+            else:
+                print("[-] Inno Setup compiler (ISCC.exe) not found. Skipping installer exe creation.")
     else:
         print("[-] Build finished but executable was not found at expected location.")
         print(f"[-] Check {output_app_dir}")
 
 if __name__ == "__main__":
     main()
+

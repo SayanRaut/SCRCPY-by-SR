@@ -213,6 +213,56 @@ class ScrcpyCore:
         except Exception as e:
             return False, str(e)
 
+    def pair_wireless(self, host_port: str, code: str) -> (bool, str):
+        """Pair with an Android 11+ device over Wi-Fi without USB (adb pair host:port code)."""
+        target = host_port.strip()
+        code = code.strip()
+        try:
+            res = self.run_adb(['pair', target, code], timeout=15)
+            output = (res.stdout + res.stderr).strip()
+            if "successfully paired" in output.lower():
+                return True, output
+            return False, output or "Pairing failed. Make sure the pairing dialog is open on your phone."
+        except Exception as e:
+            return False, str(e)
+
+    def scan_adb_port(self, ip: str, center_port: Optional[int] = None) -> Optional[int]:
+        """
+        Fast socket probe to auto-detect the active Wireless Debugging connect port on Android 11+.
+        Scans sequential ephemeral ports around the pairing port or standard ADB ports.
+        """
+        import socket
+        from concurrent.futures import ThreadPoolExecutor
+
+        candidates = []
+        if center_port and 1024 < center_port < 65535:
+            # Ephemeral ports in Android/Linux are allocated sequentially close to pairing port
+            candidates.extend(range(max(1025, center_port - 250), min(65535, center_port + 250)))
+
+        for p in [5555, 37000, 38000, 39000, 40000, 41000, 42000, 43000, 44000, 45000]:
+            if p not in candidates:
+                candidates.append(p)
+
+        def test_port(p):
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.settimeout(0.08)
+                    if s.connect_ex((ip, p)) == 0:
+                        return p
+            except Exception:
+                pass
+            return None
+
+        with ThreadPoolExecutor(max_workers=50) as executor:
+            for p in executor.map(test_port, candidates):
+                if p:
+                    # Verify adb connection
+                    res = self.run_adb(['connect', f"{ip}:{p}"], timeout=3)
+                    if "connected to" in (res.stdout + res.stderr).lower():
+                        self.add_recent_ip(ip)
+                        return p
+        return None
+
     def connect_wireless(self, ip: str, port: int = 5555) -> (bool, str):
         """Connect to device over Wi-Fi (adb connect ip:port)."""
         target = f"{ip.strip()}:{port}" if ":" not in ip else ip.strip()
@@ -402,6 +452,15 @@ class ScrcpyCore:
         video_source = options.get('video_source')
         if video_source == 'Camera':
             cmd.append('--video-source=camera')
+            camera_facing = options.get('camera_facing')
+            if camera_facing and camera_facing in ('back', 'front', 'external'):
+                cmd.append(f'--camera-facing={camera_facing}')
+            camera_size = options.get('camera_size')
+            if camera_size:
+                cmd.append(f'--camera-size={camera_size}')
+            camera_fps = options.get('camera_fps')
+            if camera_fps:
+                cmd.append(f'--camera-fps={camera_fps}')
 
         # Input Controls (Mouse and Keyboard)
         # Note: If video_source is Camera, scrcpy disables control automatically
@@ -597,7 +656,8 @@ class ScrcpyCore:
             "record": False,
             "record_format": "mp4",
             "record_folder": os.path.join(self.base_dir, "recordings"),
-            "recent_ips": []
+            "recent_ips": [],
+            "theme": "dark"
         }
         if os.path.exists(self.config_path):
             try:

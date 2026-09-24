@@ -12,7 +12,7 @@ import math
 from typing import List, Dict, Optional
 
 from PySide6.QtCore import Qt, QThread, Signal, Slot, QTimer, QSize, QObject, QRunnable, QThreadPool, QPointF, QRectF
-from PySide6.QtGui import QIcon, QFont, QColor, QTextCursor, QPixmap, QAction, QPainter, QPainterPath, QPen, QBrush, QLinearGradient
+from PySide6.QtGui import QIcon, QFont, QColor, QTextCursor, QPixmap, QAction, QPainter, QPainterPath, QPen, QBrush, QLinearGradient, QPalette
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QGridLayout, QLabel, QPushButton, QComboBox, QCheckBox, QLineEdit,
@@ -28,19 +28,35 @@ from scrcpy_core import ScrcpyCore
 # ==============================================================================
 # MODERN FLUENT / CYBERPUNK DARK THEME STYLESHEET
 # ==============================================================================
-MODERN_STYLE = """
+DARK_STYLE = """
 /* Global Window & Typography */
-QMainWindow, QWidget {
+QMainWindow, QDialog {
     background-color: #0D0F17;
+}
+
+QWidget#central_widget {
+    background-color: #0D0F17;
+}
+
+QWidget {
     color: #E2E8F0;
     font-family: 'Segoe UI', 'Inter', -apple-system, sans-serif;
     font-size: 13px;
+}
+
+/* Ensure ALL text labels have completely transparent background */
+QLabel {
+    background: transparent;
+    background-color: transparent;
 }
 
 /* Scroll Area & Container */
 QScrollArea {
     border: none;
     background-color: transparent;
+}
+QScrollArea > QWidget > QWidget {
+    background: transparent;
 }
 QScrollBar:vertical {
     border: none;
@@ -73,18 +89,28 @@ QFrame.card:hover {
 
 /* Headings & Labels */
 QLabel.heading {
+    background: transparent;
+    background-color: transparent;
     font-size: 17px;
     font-weight: 700;
     color: #FFFFFF;
 }
 QLabel.subheading {
+    background: transparent;
+    background-color: transparent;
     font-size: 12px;
     color: #718096;
 }
 QLabel.section-title {
+    background: transparent;
+    background-color: transparent;
     font-size: 14px;
     font-weight: 600;
     color: #00F0FF;
+}
+QLabel.banner-title, QLabel.banner-file {
+    background: transparent;
+    background-color: transparent;
 }
 
 /* Inputs & Dropdowns */
@@ -298,7 +324,376 @@ QLabel#status_pill {
     font-size: 12px;
     font-weight: 600;
 }
+
+/* Theme Toggle Button */
+QPushButton#btn_theme_toggle {
+    background-color: #161A26;
+    color: #FBBF24;
+    border: 1px solid #2B344B;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 700;
+}
+QPushButton#btn_theme_toggle:hover {
+    background-color: #242D42;
+    border: 1px solid #F59E0B;
+    color: #FCD34D;
+}
 """
+
+# ==============================================================================
+# MODERN FLUENT LIGHT THEME STYLESHEET
+# ==============================================================================
+LIGHT_STYLE = """
+/* Global Window & Typography */
+QMainWindow, QDialog {
+    background-color: #F8FAFC;
+}
+
+QWidget#central_widget {
+    background-color: #F8FAFC;
+}
+
+QWidget {
+    color: #0F172A;
+    font-family: 'Segoe UI', 'Inter', -apple-system, sans-serif;
+    font-size: 13px;
+}
+
+/* Ensure ALL text labels have completely transparent background */
+QLabel {
+    background: transparent;
+    background-color: transparent;
+}
+
+/* Scroll Area & Container */
+QScrollArea {
+    border: none;
+    background-color: transparent;
+}
+QScrollArea > QWidget > QWidget {
+    background: transparent;
+}
+QScrollBar:vertical {
+    border: none;
+    background: #F1F5F9;
+    width: 8px;
+    border-radius: 4px;
+    margin: 0px;
+}
+QScrollBar::handle:vertical {
+    background: #CBD5E1;
+    min-height: 25px;
+    border-radius: 4px;
+}
+QScrollBar::handle:vertical:hover {
+    background: #0284C7;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+/* Cards & Frames */
+QFrame.card {
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+}
+QFrame.card:hover {
+    border: 1px solid #CBD5E1;
+}
+
+/* Headings & Labels */
+QLabel.heading {
+    background: transparent;
+    background-color: transparent;
+    font-size: 17px;
+    font-weight: 700;
+    color: #0F172A;
+}
+QLabel.subheading {
+    background: transparent;
+    background-color: transparent;
+    font-size: 12px;
+    color: #64748B;
+}
+QLabel.section-title {
+    background: transparent;
+    background-color: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0284C7;
+}
+QLabel.banner-title, QLabel.banner-file {
+    background: transparent;
+    background-color: transparent;
+}
+
+/* Inputs & Dropdowns */
+QLineEdit, QComboBox, QSpinBox {
+    background-color: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 7px 12px;
+    color: #0F172A;
+    selection-background-color: #0284C7;
+    selection-color: #FFFFFF;
+    font-size: 13px;
+}
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus {
+    border: 1px solid #0284C7;
+    background-color: #F8FAFC;
+}
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 25px;
+    border-left: none;
+}
+QComboBox QAbstractItemView {
+    background-color: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    color: #0F172A;
+    selection-background-color: #E0F2FE;
+    selection-color: #0284C7;
+    outline: none;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+/* Checkboxes */
+QCheckBox {
+    spacing: 8px;
+    font-size: 13px;
+    color: #334155;
+}
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1px solid #CBD5E1;
+    background-color: #FFFFFF;
+}
+QCheckBox::indicator:hover {
+    border: 1px solid #0284C7;
+}
+QCheckBox::indicator:checked {
+    background-color: #0284C7;
+    border: 1px solid #0284C7;
+    image: none;
+}
+
+/* Modern Tab Widget */
+QTabWidget::pane {
+    border: 1px solid #E2E8F0;
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    top: -1px;
+}
+QTabBar::tab {
+    background-color: #F1F5F9;
+    color: #64748B;
+    padding: 10px 18px;
+    margin-right: 4px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    border: 1px solid transparent;
+}
+QTabBar::tab:hover {
+    color: #0F172A;
+    background-color: #E2E8F0;
+}
+QTabBar::tab:selected {
+    color: #0284C7;
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-bottom: 2px solid #0284C7;
+}
+
+/* Standard Buttons */
+QPushButton {
+    background-color: #F1F5F9;
+    color: #1E293B;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 13px;
+}
+QPushButton:hover {
+    background-color: #E2E8F0;
+    border: 1px solid #94A3B8;
+    color: #0F172A;
+}
+QPushButton:pressed {
+    background-color: #CBD5E1;
+}
+
+/* Primary Action Buttons */
+QPushButton#btn_primary {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0284C7, stop:1 #0369A1);
+    color: #FFFFFF;
+    border: none;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: 10px;
+}
+QPushButton#btn_primary:hover {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0EA5E9, stop:1 #0284C7);
+}
+
+QPushButton#btn_hero_start {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #10B981, stop:1 #059669);
+    color: #FFFFFF;
+    border: none;
+    font-size: 16px;
+    font-weight: 800;
+    border-radius: 12px;
+    padding: 12px 24px;
+}
+QPushButton#btn_hero_start:hover {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #34D399, stop:1 #10B981);
+}
+
+QPushButton#btn_hero_stop {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #EF4444, stop:1 #DC2626);
+    color: #FFFFFF;
+    border: none;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 12px;
+    padding: 12px 24px;
+}
+QPushButton#btn_hero_stop:hover {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #F87171, stop:1 #EF4444);
+}
+QPushButton#btn_hero_stop:pressed {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #B91C1C, stop:1 #991B1B);
+}
+
+/* Secondary Action Buttons */
+QPushButton#btn_purple {
+    background-color: #FAF5FF;
+    color: #7E22CE;
+    border: 1px solid #D8B4FE;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-weight: 600;
+}
+QPushButton#btn_purple:hover {
+    background-color: #F3E8FF;
+    border: 1px solid #C084FC;
+    color: #6B21A8;
+}
+
+QPushButton#btn_emerald {
+    background-color: #ECFDF5;
+    color: #047857;
+    border: 1px solid #A7F3D0;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-weight: 600;
+}
+QPushButton#btn_emerald:hover {
+    background-color: #D1FAE5;
+    border: 1px solid #6EE7B7;
+    color: #065F46;
+}
+
+/* Remote Control Bar Buttons */
+QPushButton.remote-btn {
+    background-color: #F1F5F9;
+    color: #1E293B;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+QPushButton.remote-btn:hover {
+    background-color: #E2E8F0;
+    border: 1px solid #0284C7;
+    color: #0284C7;
+}
+
+/* Terminal Console */
+QTextEdit#console_log {
+    background-color: #0F172A;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    color: #94A3B8;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 8px;
+}
+
+/* Status Pill */
+QLabel#status_pill {
+    background-color: #E2E8F0;
+    color: #475569;
+    border-radius: 12px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Theme Toggle Button */
+QPushButton#btn_theme_toggle {
+    background-color: #F1F5F9;
+    color: #4338CA;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 700;
+}
+QPushButton#btn_theme_toggle:hover {
+    background-color: #E2E8F0;
+    border: 1px solid #6366F1;
+    color: #3730A3;
+}
+"""
+
+MODERN_STYLE = DARK_STYLE
+
+
+def get_light_palette() -> QPalette:
+    pal = QPalette()
+    pal.setColor(QPalette.Window, QColor("#F8FAFC"))
+    pal.setColor(QPalette.WindowText, QColor("#0F172A"))
+    pal.setColor(QPalette.Base, QColor("#FFFFFF"))
+    pal.setColor(QPalette.AlternateBase, QColor("#F1F5F9"))
+    pal.setColor(QPalette.ToolTipBase, QColor("#0F172A"))
+    pal.setColor(QPalette.ToolTipText, QColor("#FFFFFF"))
+    pal.setColor(QPalette.Text, QColor("#0F172A"))
+    pal.setColor(QPalette.Button, QColor("#F1F5F9"))
+    pal.setColor(QPalette.ButtonText, QColor("#0F172A"))
+    pal.setColor(QPalette.BrightText, QColor("#DC2626"))
+    pal.setColor(QPalette.Highlight, QColor("#0284C7"))
+    pal.setColor(QPalette.HighlightedText, QColor("#FFFFFF"))
+    return pal
+
+
+def get_dark_palette() -> QPalette:
+    pal = QPalette()
+    pal.setColor(QPalette.Window, QColor("#0D0F17"))
+    pal.setColor(QPalette.WindowText, QColor("#E2E8F0"))
+    pal.setColor(QPalette.Base, QColor("#161924"))
+    pal.setColor(QPalette.AlternateBase, QColor("#10131C"))
+    pal.setColor(QPalette.ToolTipBase, QColor("#0D0F17"))
+    pal.setColor(QPalette.ToolTipText, QColor("#FFFFFF"))
+    pal.setColor(QPalette.Text, QColor("#E2E8F0"))
+    pal.setColor(QPalette.Button, QColor("#1E2333"))
+    pal.setColor(QPalette.ButtonText, QColor("#E2E8F0"))
+    pal.setColor(QPalette.BrightText, QColor("#EF4444"))
+    pal.setColor(QPalette.Highlight, QColor("#00F0FF"))
+    pal.setColor(QPalette.HighlightedText, QColor("#0D0F17"))
+    return pal
 
 
 # ==============================================================================
@@ -784,137 +1179,372 @@ class DeviceSimulationWidget(QWidget):
 
 
 # ==============================================================================
-# MODAL DIALOG: MANUAL WI-FI SETUP
+# MODAL DIALOG: WIRELESS DEVICE SETUP WIZARD
 # ==============================================================================
-class ManualWifiDialog(QDialog):
+class WirelessManagerDialog(QDialog):
     """
-    In-window modal dialog for manual Wi-Fi connection, port selection,
-    and recent connection history.
+    User-friendly modal dialog for Wireless ADB setup:
+    - Tab 1: Android 11+ Cable-Free Pairing (No USB cable needed)
+    - Tab 2: Quick Connect (Standard Port 5555 / Reconnect)
+    - Tab 3: Legacy 1-Click USB-to-Wi-Fi Switch (Android 10 & below)
     """
     def __init__(self, core: ScrcpyCore, default_ip: str = "", parent=None, on_connected_cb=None):
         super().__init__(parent)
         self.core = core
         self.on_connected_cb = on_connected_cb
-        self.setWindowTitle("Manual Wi-Fi Device Setup • SCRCPY by Sneak")
-        self.setFixedSize(450, 350)
+        self.setWindowTitle("Wireless Device Setup Wizard • SCRCPY by Sneak")
+        self.setMinimumSize(560, 520)
+        self.resize(580, 530)
         self.setModal(True)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setContentsMargins(22, 20, 22, 20)
         layout.setSpacing(14)
 
         # Header
         h_title = QHBoxLayout()
         icon_lbl = QLabel()
-        icon_lbl.setPixmap(qta.icon("fa5s.wifi", color="#00F0FF").pixmap(QSize(28, 28)))
+        icon_lbl.setPixmap(qta.icon("fa5s.wifi", color="#00F0FF").pixmap(QSize(30, 30)))
         h_title.addWidget(icon_lbl)
-        
-        lbl_h = QLabel("Wi-Fi TCP/IP Setup")
-        lbl_h.setStyleSheet("font-size: 16px; font-weight: bold; color: #FFFFFF;")
-        h_title.addWidget(lbl_h)
+
+        v_head = QVBoxLayout()
+        v_head.setSpacing(2)
+        lbl_h = QLabel("Wireless Device Setup Wizard")
+        lbl_h.setProperty("class", "heading")
+        lbl_desc = QLabel("Connect your Android phone over Wi-Fi without cables (Android 11+) or via 1-click switch.")
+        lbl_desc.setProperty("class", "subheading")
+        lbl_desc.setWordWrap(True)
+        v_head.addWidget(lbl_h)
+        v_head.addWidget(lbl_desc)
+        h_title.addLayout(v_head)
         h_title.addStretch(1)
         layout.addLayout(h_title)
 
-        lbl_desc = QLabel("Enter your phone's Wi-Fi IP address and ADB port (default: 5555) to establish wireless connection.")
-        lbl_desc.setWordWrap(True)
-        lbl_desc.setStyleSheet("color: #718096; font-size: 12px;")
-        layout.addWidget(lbl_desc)
+        # Tab Widget
+        self.tabs = QTabWidget()
 
-        # IP & Port form
-        grid = QGridLayout()
-        grid.setSpacing(10)
+        # ----------------------------------------------------------------------
+        # TAB 1: Android 11+ No USB Needed
+        # ----------------------------------------------------------------------
+        tab_pair = QWidget()
+        l_pair = QVBoxLayout(tab_pair)
+        l_pair.setContentsMargins(14, 14, 14, 14)
+        l_pair.setSpacing(12)
 
-        lbl_ip = QLabel("Phone IP Address:")
-        lbl_ip.setStyleSheet("font-weight: 600; color: #E2E8F0;")
-        self.txt_ip = QLineEdit(default_ip)
-        self.txt_ip.setPlaceholderText("e.g. 192.168.10.37")
-        grid.addWidget(lbl_ip, 0, 0)
-        grid.addWidget(self.txt_ip, 0, 1)
+        # Friendly instructions card
+        guide_frame = QFrame()
+        guide_frame.setProperty("class", "card")
+        g_lay = QVBoxLayout(guide_frame)
+        g_lay.setContentsMargins(14, 12, 14, 12)
+        g_lay.setSpacing(6)
 
-        lbl_port = QLabel("ADB Port:")
-        lbl_port.setStyleSheet("font-weight: 600; color: #E2E8F0;")
-        self.txt_port = QLineEdit("5555")
-        self.txt_port.setMaximumWidth(90)
-        grid.addWidget(lbl_port, 1, 0)
-        grid.addWidget(self.txt_port, 1, 1)
+        g_title = QLabel("📱 How to connect without any USB cable (Android 11+):")
+        g_title.setProperty("class", "section-title")
+        g_step1 = QLabel("1. On phone: Go to <b>Settings → System → Developer options</b>.")
+        g_step2 = QLabel("2. Turn ON <b>Wireless debugging</b> and tap on it.")
+        g_step3 = QLabel("3. Tap <b>'Pair device with pairing code'</b>.")
+        g_step4 = QLabel("4. Enter the pairing code and address shown on your phone below:")
+        for w in (g_title, g_step1, g_step2, g_step3, g_step4):
+            w.setWordWrap(True)
+            g_lay.addWidget(w)
+        l_pair.addWidget(guide_frame)
 
-        lbl_recent = QLabel("Recent Devices:")
-        lbl_recent.setStyleSheet("font-weight: 600; color: #E2E8F0;")
+        # Pairing Form
+        grid_p = QGridLayout()
+        grid_p.setSpacing(10)
+
+        lbl_p_addr = QLabel("Pairing Address (IP:Port):")
+        lbl_p_addr.setStyleSheet("background: transparent; font-weight: 600;")
+        self.txt_pair_addr = QLineEdit()
+        self.txt_pair_addr.setPlaceholderText("e.g. 192.168.1.50:38721")
+
+        lbl_p_code = QLabel("6-Digit Pairing Code:")
+        lbl_p_code.setStyleSheet("background: transparent; font-weight: 600;")
+        self.txt_pair_code = QLineEdit()
+        self.txt_pair_code.setPlaceholderText("e.g. 845129")
+        self.txt_pair_code.setMaxLength(6)
+
+        lbl_c_port = QLabel("Connect Port (Optional - Auto-detected if blank):")
+        lbl_c_port.setStyleSheet("background: transparent; font-weight: 600;")
+        self.txt_connect_port = QLineEdit()
+        self.txt_connect_port.setPlaceholderText("Optional: Leave blank to auto-detect port")
+
+        grid_p.addWidget(lbl_p_addr, 0, 0)
+        grid_p.addWidget(self.txt_pair_addr, 0, 1)
+        grid_p.addWidget(lbl_p_code, 1, 0)
+        grid_p.addWidget(self.txt_pair_code, 1, 1)
+        grid_p.addWidget(lbl_c_port, 2, 0)
+        grid_p.addWidget(self.txt_connect_port, 2, 1)
+        l_pair.addLayout(grid_p)
+
+        self.btn_do_pair = QPushButton(" ⚡ Pair & Connect Device Now")
+        self.btn_do_pair.setObjectName("btn_primary")
+        self.btn_do_pair.setIcon(qta.icon("fa5s.bolt", color="#0A0D14"))
+        self.btn_do_pair.setCursor(Qt.PointingHandCursor)
+        self.btn_do_pair.clicked.connect(self._do_pair_and_connect)
+        l_pair.addWidget(self.btn_do_pair)
+        l_pair.addStretch(1)
+
+        self.tabs.addTab(tab_pair, qta.icon("fa5s.wifi", color="#00F0FF"), "⚡ No Cable (Android 11+)")
+
+        # ----------------------------------------------------------------------
+        # TAB 2: Quick Connect (Standard / Reconnect)
+        # ----------------------------------------------------------------------
+        tab_quick = QWidget()
+        l_quick = QVBoxLayout(tab_quick)
+        l_quick.setContentsMargins(14, 14, 14, 14)
+        l_quick.setSpacing(12)
+
+        lbl_q_desc = QLabel("Use this if your phone was already paired previously, or is listening on standard port 5555.")
+        lbl_q_desc.setWordWrap(True)
+        lbl_q_desc.setProperty("class", "subheading")
+        l_quick.addWidget(lbl_q_desc)
+
+        grid_q = QGridLayout()
+        grid_q.setSpacing(10)
+
+        lbl_q_ip = QLabel("Phone IP Address:")
+        lbl_q_ip.setStyleSheet("background: transparent; font-weight: 600;")
+        self.txt_quick_ip = QLineEdit(default_ip)
+        self.txt_quick_ip.setPlaceholderText("e.g. 192.168.1.50")
+
+        lbl_q_port = QLabel("Port:")
+        lbl_q_port.setStyleSheet("background: transparent; font-weight: 600;")
+        self.txt_quick_port = QLineEdit("5555")
+        self.txt_quick_port.setMaximumWidth(100)
+
+        lbl_q_recent = QLabel("Recent Devices:")
+        lbl_q_recent.setStyleSheet("background: transparent; font-weight: 600;")
         self.cb_recent = QComboBox()
         self.cb_recent.addItem("Select from history...")
         for ip in self.core.config.get("recent_ips", []):
             self.cb_recent.addItem(ip)
         self.cb_recent.currentIndexChanged.connect(self._on_recent_selected)
-        grid.addWidget(lbl_recent, 2, 0)
-        grid.addWidget(self.cb_recent, 2, 1)
 
-        layout.addLayout(grid)
+        grid_q.addWidget(lbl_q_ip, 0, 0)
+        grid_q.addWidget(self.txt_quick_ip, 0, 1)
+        grid_q.addWidget(lbl_q_port, 1, 0)
+        grid_q.addWidget(self.txt_quick_port, 1, 1)
+        grid_q.addWidget(lbl_q_recent, 2, 0)
+        grid_q.addWidget(self.cb_recent, 2, 1)
+        l_quick.addLayout(grid_q)
+
+        h_q_acts = QHBoxLayout()
+        h_q_acts.setSpacing(10)
+        self.btn_quick_connect = QPushButton(" Connect Wirelessly")
+        self.btn_quick_connect.setObjectName("btn_emerald")
+        self.btn_quick_connect.setIcon(qta.icon("fa5s.link", color="#34D399"))
+        self.btn_quick_connect.setCursor(Qt.PointingHandCursor)
+        self.btn_quick_connect.clicked.connect(self._do_quick_connect)
+
+        self.btn_quick_disc = QPushButton(" Disconnect")
+        self.btn_quick_disc.setIcon(qta.icon("fa5s.unlink", color="#EF4444"))
+        self.btn_quick_disc.clicked.connect(self._do_disconnect)
+
+        h_q_acts.addWidget(self.btn_quick_connect)
+        h_q_acts.addWidget(self.btn_quick_disc)
+        l_quick.addLayout(h_q_acts)
+        l_quick.addStretch(1)
+
+        self.tabs.addTab(tab_quick, qta.icon("fa5s.link", color="#34D399"), "🔗 Quick Connect / History")
+
+        # ----------------------------------------------------------------------
+        # TAB 3: 1-Click USB Switch (Android 10 & below)
+        # ----------------------------------------------------------------------
+        tab_usb = QWidget()
+        l_usb = QVBoxLayout(tab_usb)
+        l_usb.setContentsMargins(14, 14, 14, 14)
+        l_usb.setSpacing(14)
+
+        card_u = QFrame()
+        card_u.setProperty("class", "card")
+        u_lay = QVBoxLayout(card_u)
+        u_lay.setContentsMargins(14, 14, 14, 14)
+        u_lay.setSpacing(8)
+
+        lbl_u_title = QLabel("🔌 For Android 10 or older devices:")
+        lbl_u_title.setProperty("class", "section-title")
+        lbl_u_step1 = QLabel("1. Connect your phone with a USB cable once.")
+        lbl_u_step2 = QLabel("2. Click the button below to auto-fetch its Wi-Fi IP and enable wireless mode.")
+        lbl_u_step3 = QLabel("3. Once connected, <b>you can unplug the USB cable!</b>")
+        for w in (lbl_u_title, lbl_u_step1, lbl_u_step2, lbl_u_step3):
+            w.setWordWrap(True)
+            u_lay.addWidget(w)
+        l_usb.addWidget(card_u)
+
+        self.btn_usb_switch = QPushButton(" 🔌 Switch Connected USB Phone to Wi-Fi")
+        self.btn_usb_switch.setObjectName("btn_purple")
+        self.btn_usb_switch.setIcon(qta.icon("fa5s.plug", color="#C084FC"))
+        self.btn_usb_switch.setCursor(Qt.PointingHandCursor)
+        self.btn_usb_switch.clicked.connect(self._do_usb_switch)
+        l_usb.addWidget(self.btn_usb_switch)
+        l_usb.addStretch(1)
+
+        self.tabs.addTab(tab_usb, qta.icon("fa5s.plug", color="#C084FC"), "🔌 1-Click USB Switch")
+
+        layout.addWidget(self.tabs)
 
         # Status feedback label
         self.lbl_status = QLabel("")
-        self.lbl_status.setStyleSheet("color: #00F0FF; font-size: 12px; font-weight: 600;")
+        self.lbl_status.setStyleSheet("background: transparent; font-size: 12px; font-weight: 600; padding: 4px;")
         self.lbl_status.setWordWrap(True)
         layout.addWidget(self.lbl_status)
 
-        layout.addStretch(1)
-
-        # Action Buttons
-        h_actions = QHBoxLayout()
-        h_actions.setSpacing(10)
-
-        self.btn_connect = QPushButton(" Connect Wirelessly")
-        self.btn_connect.setObjectName("btn_emerald")
-        self.btn_connect.setIcon(qta.icon("fa5s.link", color="#34D399"))
-        self.btn_connect.setCursor(Qt.PointingHandCursor)
-        self.btn_connect.clicked.connect(self._do_connect)
-
-        self.btn_disconnect = QPushButton(" Disconnect")
-        self.btn_disconnect.setIcon(qta.icon("fa5s.unlink", color="#EF4444"))
-        self.btn_disconnect.clicked.connect(self._do_disconnect)
-
+        # Bottom Buttons
+        h_bot = QHBoxLayout()
+        h_bot.addStretch(1)
         self.btn_close = QPushButton(" Close")
         self.btn_close.clicked.connect(self.accept)
-
-        h_actions.addWidget(self.btn_connect)
-        h_actions.addWidget(self.btn_disconnect)
-        h_actions.addWidget(self.btn_close)
-        layout.addLayout(h_actions)
+        h_bot.addWidget(self.btn_close)
+        layout.addLayout(h_bot)
 
     def _on_recent_selected(self, index):
         if index > 0:
-            self.txt_ip.setText(self.cb_recent.itemText(index))
+            self.txt_quick_ip.setText(self.cb_recent.itemText(index))
 
-    def _do_connect(self):
-        ip = self.txt_ip.text().strip()
-        port = int(self.txt_port.text().strip() or "5555")
+    def _do_pair_and_connect(self):
+        pair_addr = self.txt_pair_addr.text().strip()
+        pair_code = self.txt_pair_code.text().strip()
+        connect_port = self.txt_connect_port.text().strip()
+
+        if not pair_addr or ":" not in pair_addr:
+            self.lbl_status.setText("⚠️ Please enter a valid Pairing Address (e.g. 192.168.1.50:38721).")
+            self.lbl_status.setStyleSheet("color: #F59E0B; font-weight: 600;")
+            return
+        if not pair_code:
+            self.lbl_status.setText("⚠️ Please enter the 6-digit Wi-Fi pairing code.")
+            self.lbl_status.setStyleSheet("color: #F59E0B; font-weight: 600;")
+            return
+
+        self.lbl_status.setText(f"⏳ Pairing with {pair_addr} using code {pair_code}...")
+        self.lbl_status.setStyleSheet("color: #00F0FF; font-weight: 600;")
+        QApplication.processEvents()
+
+        ok_pair, msg_pair = self.core.pair_wireless(pair_addr, pair_code)
+        if not ok_pair:
+            # Check if already paired
+            if "already" in msg_pair.lower():
+                ok_pair = True
+            else:
+                self.lbl_status.setText(f"✕ Pairing failed: {msg_pair}")
+                self.lbl_status.setStyleSheet("color: #EF4444; font-weight: 600;")
+                return
+
+        phone_ip = pair_addr.split(":")[0].strip()
+        pairing_port_str = pair_addr.split(":")[1].strip()
+        pairing_port = int(pairing_port_str) if pairing_port_str.isdigit() else None
+
+        # Pre-fill Tab 2 in case manual connect is needed
+        self.txt_quick_ip.setText(phone_ip)
+
+        # 1. If user provided a specific connect_port that is DIFFERENT from pairing_port, try it first
+        if connect_port and connect_port != pairing_port_str:
+            target = f"{phone_ip}:{connect_port}"
+            self.lbl_status.setText(f"✓ Paired! Connecting to {target}...")
+            self.lbl_status.setStyleSheet("color: #00F0FF; font-weight: 600;")
+            QApplication.processEvents()
+            ok_conn, msg_conn = self.core.connect_wireless(phone_ip, int(connect_port) if connect_port.isdigit() else 5555)
+            if ok_conn:
+                self.lbl_status.setText(f"✓ Successfully paired & connected to {target}!")
+                self.lbl_status.setStyleSheet("color: #10B981; font-weight: 600;")
+                if self.on_connected_cb:
+                    self.on_connected_cb(target)
+                return
+
+        # 2. If connect_port was empty or matched pairing_port (which is temporary), run fast auto-scan
+        self.lbl_status.setText("✓ Paired! Auto-detecting phone connection port...")
+        self.lbl_status.setStyleSheet("color: #00F0FF; font-weight: 600;")
+        QApplication.processEvents()
+
+        found_port = self.core.scan_adb_port(phone_ip, center_port=pairing_port)
+        if found_port:
+            target = f"{phone_ip}:{found_port}"
+            self.lbl_status.setText(f"✓ Auto-detected & Connected to {target}!")
+            self.lbl_status.setStyleSheet("color: #10B981; font-weight: 600;")
+            if self.on_connected_cb:
+                self.on_connected_cb(target)
+            return
+
+        # 3. If auto-scan couldn't find it, guide user clearly to check the main screen port
+        self.txt_quick_port.clear()
+        self.txt_quick_port.setFocus()
+        self.lbl_status.setText(
+            "✓ Device PAIRED successfully!\n\n"
+            "⚠️ Note: On Android, the Connect Port is DIFFERENT from the Pairing Port.\n"
+            f"1. On phone: Look at the main 'Wireless debugging' screen (behind the popup).\n"
+            f"2. Look under 'IP address & Port' (e.g. {phone_ip}:XXXXX).\n"
+            "3. Switch to Tab 2 ('Quick Connect'), enter that port number, and click Connect!"
+        )
+        self.lbl_status.setStyleSheet("color: #F59E0B; font-weight: 600;")
+
+    def _do_quick_connect(self):
+        ip = self.txt_quick_ip.text().strip()
+        port_str = self.txt_quick_port.text().strip() or "5555"
         if not ip:
             self.lbl_status.setText("⚠️ Please enter a valid IP address.")
             self.lbl_status.setStyleSheet("color: #F59E0B; font-weight: 600;")
             return
 
+        port = int(port_str) if port_str.isdigit() else 5555
         self.lbl_status.setText(f"Connecting to {ip}:{port}...")
         self.lbl_status.setStyleSheet("color: #00F0FF; font-weight: 600;")
         QApplication.processEvents()
 
         ok, msg = self.core.connect_wireless(ip, port)
+        target = f"{ip}:{port}"
         if ok:
-            self.lbl_status.setText(f"✓ Connected successfully to {ip}:{port}")
+            self.lbl_status.setText(f"✓ Connected successfully to {target}")
             self.lbl_status.setStyleSheet("color: #10B981; font-weight: 600;")
             if self.on_connected_cb:
-                self.on_connected_cb(f"{ip}:{port}")
+                self.on_connected_cb(target)
         else:
             self.lbl_status.setText(f"✕ {msg}")
             self.lbl_status.setStyleSheet("color: #EF4444; font-weight: 600;")
 
     def _do_disconnect(self):
-        ip = self.txt_ip.text().strip()
-        port = self.txt_port.text().strip() or "5555"
+        ip = self.txt_quick_ip.text().strip()
+        port = self.txt_quick_port.text().strip() or "5555"
         target = f"{ip}:{port}" if ip else None
         ok, msg = self.core.disconnect_wireless(target)
         self.lbl_status.setText(f"Disconnected: {target or 'all devices'}")
         self.lbl_status.setStyleSheet("color: #F59E0B; font-weight: 600;")
         if self.on_connected_cb:
             self.on_connected_cb(None)
+
+    def _do_usb_switch(self):
+        devices = self.core.get_devices()
+        wired = [d for d in devices if not d.get("is_wireless")]
+        if not wired:
+            self.lbl_status.setText("⚠️ No USB-connected phone detected. Please plug in your phone via USB cable first.")
+            self.lbl_status.setStyleSheet("color: #F59E0B; font-weight: 600;")
+            return
+
+        serial = wired[0]["serial"]
+        self.lbl_status.setText(f"Detecting IP for USB device {serial}...")
+        self.lbl_status.setStyleSheet("color: #00F0FF; font-weight: 600;")
+        QApplication.processEvents()
+
+        ip = self.core.get_device_ip(serial)
+        if not ip:
+            self.lbl_status.setText("✕ Could not auto-detect Wi-Fi IP. Ensure your phone is connected to Wi-Fi.")
+            self.lbl_status.setStyleSheet("color: #EF4444; font-weight: 600;")
+            return
+
+        ok_tcp, msg_tcp = self.core.enable_tcpip(serial, 5555)
+        ok_conn, msg_conn = self.core.connect_wireless(ip, 5555)
+        target = f"{ip}:5555"
+        if ok_conn:
+            self.lbl_status.setText(f"✓ Switched to wireless! Connected to {target}. You can now unplug the USB cable!")
+            self.lbl_status.setStyleSheet("color: #10B981; font-weight: 600;")
+            if self.on_connected_cb:
+                self.on_connected_cb(target)
+        else:
+            self.lbl_status.setText(f"✕ Wireless switch failed: {msg_conn}")
+            self.lbl_status.setStyleSheet("color: #EF4444; font-weight: 600;")
+
+
+# Keep ManualWifiDialog alias for backwards compatibility
+ManualWifiDialog = WirelessManagerDialog
 
 
 # ==============================================================================
@@ -932,6 +1562,7 @@ class ScrcpyApp(QMainWindow):
         self.resize(1040, 800)
         self.setMinimumSize(900, 680)
         self._is_camera_mode: bool = False
+        self.current_theme: str = self.core.config.get("theme", "dark")
 
         # Set Icon
         icon_path = os.path.join(self.core.base_dir, "sneak.ico")
@@ -967,6 +1598,7 @@ class ScrcpyApp(QMainWindow):
         # Build Interface
         self._init_ui()
         self._init_system_tray()
+        self.apply_theme(self.current_theme)
 
         # Auto-refresh timer for ADB devices
         self.scanner_timer = QTimer(self)
@@ -983,6 +1615,7 @@ class ScrcpyApp(QMainWindow):
 
     def _init_ui(self):
         central_widget = QWidget()
+        central_widget.setObjectName("central_widget")
         self.setCentralWidget(central_widget)
 
         main_layout = QVBoxLayout(central_widget)
@@ -1010,18 +1643,129 @@ class ScrcpyApp(QMainWindow):
             scroll.setFrameShape(QFrame.NoFrame)
             scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
             scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-            scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
             scroll.setWidget(widget)
+            widget.setAutoFillBackground(False)
+            widget.setAttribute(Qt.WA_StyledBackground, True)
+            if scroll.viewport():
+                scroll.viewport().setAutoFillBackground(False)
             return scroll
 
         tabs.addTab(_wrap_tab(self._build_tab_connection()), qta.icon("fa5s.network-wired", color="#00F0FF"), "Connection")
-        tabs.addTab(_wrap_tab(self._build_tab_video()), qta.icon("fa5s.sliders-h", color="#A855F7"), "Display & Quality")
+        tabs.addTab(_wrap_tab(self._build_tab_video()), qta.icon("fa5s.sliders-h", color="#A855F7"), "Display && Quality")
         tabs.addTab(_wrap_tab(self._build_tab_smart_features()), qta.icon("fa5s.bolt", color="#F59E0B"), "Smart Features")
         tabs.addTab(_wrap_tab(self._build_tab_recording()), qta.icon("fa5s.record-vinyl", color="#EF4444"), "Recording")
         main_layout.addWidget(tabs, stretch=1)
 
         # 4. Collapsible Log Console
         main_layout.addWidget(self._build_console_panel())
+
+    # ==========================================================================
+    # THEME MANAGEMENT (DARK / LIGHT)
+    # ==========================================================================
+    def toggle_theme(self):
+        """Swaps between Dark and Light mode."""
+        new_theme = "light" if self.current_theme == "dark" else "dark"
+        self.apply_theme(new_theme)
+
+    def apply_theme(self, theme_name: str):
+        """Applies stylesheet and updates UI widgets for the selected theme."""
+        self.current_theme = theme_name
+        self.core.save_config({"theme": theme_name})
+        app = QApplication.instance()
+        if app:
+            pal = get_light_palette() if theme_name == "light" else get_dark_palette()
+            app.setPalette(pal)
+            if theme_name == "light":
+                app.setStyleSheet(LIGHT_STYLE)
+            else:
+                app.setStyleSheet(DARK_STYLE)
+
+        if hasattr(self, 'btn_theme_toggle'):
+            if theme_name == "light":
+                self.btn_theme_toggle.setText(" 🌙 Dark")
+                self.btn_theme_toggle.setIcon(qta.icon("fa5s.moon", color="#4338CA"))
+                self.btn_theme_toggle.setToolTip("Switch to Dark Theme")
+            else:
+                self.btn_theme_toggle.setText(" ☀️ Light")
+                self.btn_theme_toggle.setIcon(qta.icon("fa5s.sun", color="#F59E0B"))
+                self.btn_theme_toggle.setToolTip("Switch to Light Theme")
+
+        if hasattr(self, 'lbl_sim_brand'):
+            if theme_name == "light":
+                self.lbl_sim_brand.setStyleSheet("background: transparent; color: #0F172A; font-size: 12px; font-weight: 600;")
+            else:
+                self.lbl_sim_brand.setStyleSheet("background: transparent; color: #E2E8F0; font-size: 12px; font-weight: 600;")
+
+        if hasattr(self, 'lbl_sim_model'):
+            color = "#0284C7" if theme_name == "light" else "#00F0FF"
+            self.lbl_sim_model.setStyleSheet(f"background: transparent; color: {color}; font-size: 12px; font-weight: 600;")
+
+        if hasattr(self, 'chk_game_mode'):
+            color = "#0284C7" if theme_name == "light" else "#00F0FF"
+            self.chk_game_mode.setStyleSheet(f"background: transparent; font-weight: 700; color: {color};")
+
+        if hasattr(self, 'lbl_select'):
+            color = "#64748B" if theme_name == "light" else "#718096"
+            self.lbl_select.setStyleSheet(f"background: transparent; font-size: 10px; font-weight: 700; color: {color}; letter-spacing: 0.5px;")
+
+        if hasattr(self, 'lbl_console'):
+            color = "#64748B" if theme_name == "light" else "#718096"
+            self.lbl_console.setStyleSheet(f"background: transparent; font-weight: 700; color: {color}; font-size: 11px; letter-spacing: 0.5px;")
+
+        if hasattr(self, 'lbl_util'):
+            color = "#64748B" if theme_name == "light" else "#94A3B8"
+            self.lbl_util.setStyleSheet(f"background: transparent; font-weight: 600; color: {color};")
+
+        if hasattr(self, 'btn_record_mirror'):
+            icon_color = "#7E22CE" if theme_name == "light" else "#C084FC"
+            self.btn_record_mirror.setIcon(qta.icon("fa5s.video", color=icon_color))
+
+        if hasattr(self, 'btn_camera'):
+            icon_color = "#047857" if theme_name == "light" else "#34D399"
+            self.btn_camera.setIcon(qta.icon("fa5s.camera", color=icon_color))
+
+        # Refresh status pill styles
+        if hasattr(self, 'lbl_status'):
+            current_text = self.lbl_status.text()
+            if "No Device" in current_text:
+                self._set_status_pill(current_text, "danger")
+            elif "Online" in current_text or "Active" in current_text or "Connected" in current_text:
+                self._set_status_pill(current_text, "success")
+            else:
+                self._set_status_pill(current_text, "neutral")
+
+        # Refresh dual connection badges if available
+        self._refresh_dual_status()
+
+        if hasattr(self, 'saved_banner'):
+            self.reset_saved_banner_to_normal()
+
+    def _set_status_pill(self, text: str, state: str = "neutral"):
+        """Update status pill with theme-appropriate styling."""
+        if not hasattr(self, 'lbl_status'):
+            return
+        self.lbl_status.setText(text)
+        is_light = (self.current_theme == "light")
+        if state == "danger":
+            bg = "#FEE2E2" if is_light else "#361B1F"
+            fg = "#DC2626" if is_light else "#F87171"
+            border = "#FCA5A5" if is_light else "#7F1D1D"
+        elif state == "success":
+            bg = "#DCFCE7" if is_light else "#123026"
+            fg = "#16A34A" if is_light else "#34D399"
+            border = "#86EFAC" if is_light else "#065F46"
+        elif state == "info":
+            bg = "#E0F2FE" if is_light else "#1A365D"
+            fg = "#0284C7" if is_light else "#63B3ED"
+            border = "#7DD3FC" if is_light else "#2B6CB0"
+        else:
+            bg = "#E2E8F0" if is_light else "#1E2333"
+            fg = "#475569" if is_light else "#94A3B8"
+            border = "#CBD5E1" if is_light else "#2E3850"
+        
+        self.lbl_status.setStyleSheet(
+            f"background-color: {bg}; color: {fg}; border: 1px solid {border}; border-radius: 12px; padding: 4px 12px; font-weight: 600;"
+        )
 
     # --------------------------------------------------------------------------
     # HEADER SECTION
@@ -1058,8 +1802,9 @@ class ScrcpyApp(QMainWindow):
         # Device Selector Dropdown
         dev_box = QVBoxLayout()
         dev_box.setSpacing(2)
-        lbl_select = QLabel("ACTIVE TARGET DEVICE")
-        lbl_select.setStyleSheet("font-size: 10px; font-weight: 700; color: #718096; letter-spacing: 0.5px;")
+        self.lbl_select = QLabel("ACTIVE TARGET DEVICE")
+        self.lbl_select.setStyleSheet("background: transparent; font-size: 10px; font-weight: 700; color: #718096; letter-spacing: 0.5px;")
+        dev_box.addWidget(self.lbl_select)
         
         h_dev = QHBoxLayout()
         h_dev.setSpacing(8)
@@ -1086,6 +1831,14 @@ class ScrcpyApp(QMainWindow):
         self.lbl_status.setObjectName("status_pill")
         self.lbl_status.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         layout.addWidget(self.lbl_status)
+
+        # Theme Toggle Button (Top status bar near close & minimize buttons)
+        self.btn_theme_toggle = QPushButton(" ☀️ Light")
+        self.btn_theme_toggle.setObjectName("btn_theme_toggle")
+        self.btn_theme_toggle.setCursor(Qt.PointingHandCursor)
+        self.btn_theme_toggle.setToolTip("Switch between Dark and Light mode")
+        self.btn_theme_toggle.clicked.connect(self.toggle_theme)
+        layout.addWidget(self.btn_theme_toggle)
 
         return header
 
@@ -1214,54 +1967,67 @@ class ScrcpyApp(QMainWindow):
         """Reverts the banner to its normal, subtle, unhighlighted state."""
         self._banner_pulse_timer.stop()
         self._banner_reset_timer.stop()
-        self.saved_banner.setStyleSheet("""
-            QFrame#saved_media_banner {
-                background-color: #11141D;
-                border: 1px solid #1F2739;
+        is_light = (getattr(self, 'current_theme', 'dark') == 'light')
+        bg = "#F8FAFC" if is_light else "#11141D"
+        border = "#E2E8F0" if is_light else "#1F2739"
+        title_color = "#64748B" if is_light else "#718096"
+        file_color = "#334155" if is_light else "#A0AEC0"
+        btn_sec_bg = "#E2E8F0" if is_light else "#181E2C"
+        btn_sec_fg = "#1E293B" if is_light else "#CBD5E1"
+        btn_sec_bd = "#CBD5E1" if is_light else "#283348"
+
+        self.saved_banner.setStyleSheet(f"""
+            QFrame#saved_media_banner {{
+                background-color: {bg};
+                border: 1px solid {border};
                 border-radius: 8px;
-            }
-            QLabel.banner-title {
+            }}
+            QLabel.banner-title {{
+                background: transparent;
+                background-color: transparent;
                 font-size: 12px;
                 font-weight: 600;
-                color: #718096;
-            }
-            QLabel.banner-file {
+                color: {title_color};
+            }}
+            QLabel.banner-file {{
+                background: transparent;
+                background-color: transparent;
                 font-size: 11px;
-                color: #A0AEC0;
+                color: {file_color};
                 font-family: 'Consolas', monospace;
-            }
-            QPushButton.banner-btn-locate {
+            }}
+            QPushButton.banner-btn-locate {{
                 background-color: #10B981;
-                color: #062319;
+                color: #FFFFFF;
                 border: 1px solid #34D399;
                 border-radius: 5px;
                 padding: 4px 10px;
                 font-weight: bold;
                 font-size: 11px;
-            }
-            QPushButton.banner-btn-secondary {
-                background-color: #181E2C;
-                color: #CBD5E1;
-                border: 1px solid #283348;
+            }}
+            QPushButton.banner-btn-secondary {{
+                background-color: {btn_sec_bg};
+                color: {btn_sec_fg};
+                border: 1px solid {btn_sec_bd};
                 border-radius: 5px;
                 padding: 4px 10px;
                 font-size: 11px;
-            }
-            QPushButton.banner-btn-secondary:hover {
+            }}
+            QPushButton.banner-btn-secondary:hover {{
                 background-color: #242D40;
                 color: #FFFFFF;
-            }
-            QPushButton.banner-btn-close {
+            }}
+            QPushButton.banner-btn-close {{
                 background: transparent;
                 border: none;
                 color: #64748B;
                 font-size: 13px;
                 font-weight: bold;
                 padding: 2px 6px;
-            }
-            QPushButton.banner-btn-close:hover {
+            }}
+            QPushButton.banner-btn-close:hover {{
                 color: #EF4444;
-            }
+            }}
         """)
 
         rec_dir = getattr(self, 'txt_record_dir', None)
@@ -1290,11 +2056,15 @@ class ScrcpyApp(QMainWindow):
                 border-radius: 8px;
             }}
             QLabel.banner-title {{
+                background: transparent;
+                background-color: transparent;
                 font-size: 12px;
                 font-weight: 700;
                 color: #FFFFFF;
             }}
             QLabel.banner-file {{
+                background: transparent;
+                background-color: transparent;
                 font-size: 11px;
                 color: #A7F3D0;
                 font-family: 'Consolas', monospace;
@@ -1347,11 +2117,15 @@ class ScrcpyApp(QMainWindow):
                     border-radius: 8px;
                 }
                 QLabel.banner-title {
+                    background: transparent;
+                    background-color: transparent;
                     font-size: 12px;
                     font-weight: 700;
                     color: #34D399;
                 }
                 QLabel.banner-file {
+                    background: transparent;
+                    background-color: transparent;
                     font-size: 11px;
                     color: #A7F3D0;
                     font-family: 'Consolas', monospace;
@@ -1456,11 +2230,15 @@ class ScrcpyApp(QMainWindow):
                 border-radius: 8px;
             }
             QLabel.banner-title {
+                background: transparent;
+                background-color: transparent;
                 font-size: 12px;
                 font-weight: 700;
                 color: #F87171;
             }
             QLabel.banner-file {
+                background: transparent;
+                background-color: transparent;
                 font-size: 11px;
                 color: #CBD5E1;
                 font-family: 'Consolas', monospace;
@@ -1545,26 +2323,37 @@ class ScrcpyApp(QMainWindow):
         grid = QGridLayout()
         grid.setSpacing(16)
 
-        # CARD A: 1-Click Wireless Pair / Auto-detect
+        # CARD A: Wireless Setup & Connection
         card_auto = QFrame()
         card_auto.setProperty("class", "card")
         card_auto.setMinimumHeight(240)
         c_layout = QVBoxLayout(card_auto)
         c_layout.setContentsMargins(16, 16, 16, 16)
-        c_layout.setSpacing(12)
+        c_layout.setSpacing(10)
 
-        lbl_a = QLabel("⚡ 1-Click Wireless Switch (TCP/IP)")
+        lbl_a = QLabel("⚡ Wireless Setup & Connection")
         lbl_a.setProperty("class", "section-title")
-        lbl_a_desc = QLabel("Connect phone via USB once. Click the button below to auto-fetch its Wi-Fi IP and switch to full wireless mirroring.")
+        lbl_a_desc = QLabel("Connect wirelessly with NO USB cable (Android 11+) or switch an existing USB connection to Wi-Fi.")
         lbl_a_desc.setWordWrap(True)
         lbl_a_desc.setProperty("class", "subheading")
         c_layout.addWidget(lbl_a)
         c_layout.addWidget(lbl_a_desc)
 
-        self.btn_switch_wireless = QPushButton(" Enable TCP/IP & Connect Wirelessly")
-        self.btn_switch_wireless.setObjectName("btn_primary")
-        self.btn_switch_wireless.setIcon(qta.icon("fa5s.wifi", color="#0A0D14"))
+        # Primary Button: Wireless Setup Wizard (Android 11+ No Cable Needed)
+        self.btn_open_wifi_wizard = QPushButton(" ⚡ Wireless Setup (No Cable • Android 11+)")
+        self.btn_open_wifi_wizard.setObjectName("btn_primary")
+        self.btn_open_wifi_wizard.setIcon(qta.icon("fa5s.wifi", color="#0A0D14"))
+        self.btn_open_wifi_wizard.setCursor(Qt.PointingHandCursor)
+        self.btn_open_wifi_wizard.setToolTip("Pair and connect wirelessly using phone's Wireless Debugging pairing code (No USB cable needed!)")
+        self.btn_open_wifi_wizard.clicked.connect(self.open_manual_wifi_dialog)
+        c_layout.addWidget(self.btn_open_wifi_wizard)
+
+        # Secondary Button: 1-Click USB-to-Wi-Fi Switch (Android 10 & below)
+        self.btn_switch_wireless = QPushButton(" 🔌 1-Click USB Switch (Android 10 & below)")
+        self.btn_switch_wireless.setObjectName("btn_purple")
+        self.btn_switch_wireless.setIcon(qta.icon("fa5s.plug", color="#C084FC"))
         self.btn_switch_wireless.setCursor(Qt.PointingHandCursor)
+        self.btn_switch_wireless.setToolTip("Temporarily plug USB cable once, click here to switch to wireless, then unplug cable!")
         self.btn_switch_wireless.clicked.connect(self.action_one_click_wireless)
         c_layout.addWidget(self.btn_switch_wireless)
 
@@ -1593,7 +2382,7 @@ class ScrcpyApp(QMainWindow):
         h_sim_title.addWidget(lbl_b)
         h_sim_title.addStretch(1)
 
-        self.btn_open_wifi_dialog = QPushButton(" 📶 Wi-Fi IP Setup...")
+        self.btn_open_wifi_dialog = QPushButton(" 📶 Wireless Manager...")
         self.btn_open_wifi_dialog.setObjectName("btn_emerald")
         self.btn_open_wifi_dialog.setIcon(qta.icon("fa5s.wifi", color="#34D399"))
         self.btn_open_wifi_dialog.setCursor(Qt.PointingHandCursor)
@@ -1616,7 +2405,7 @@ class ScrcpyApp(QMainWindow):
 
         # Dual Connection Status Header
         lbl_conn_head = QLabel("CONNECTION STATUS:")
-        lbl_conn_head.setStyleSheet("color: #718096; font-size: 10px; font-weight: bold; letter-spacing: 0.5px;")
+        lbl_conn_head.setStyleSheet("background: transparent; color: #718096; font-size: 10px; font-weight: bold; letter-spacing: 0.5px;")
         v_details.addWidget(lbl_conn_head)
 
         v_status = QVBoxLayout()
@@ -1633,7 +2422,7 @@ class ScrcpyApp(QMainWindow):
 
         # Device Specs Header
         lbl_specs_head = QLabel("DEVICE HARDWARE INFO:")
-        lbl_specs_head.setStyleSheet("color: #718096; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; margin-top: 4px;")
+        lbl_specs_head.setStyleSheet("background: transparent; color: #718096; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; margin-top: 4px;")
         v_details.addWidget(lbl_specs_head)
 
         grid_specs = QGridLayout()
@@ -1641,30 +2430,30 @@ class ScrcpyApp(QMainWindow):
         grid_specs.setVerticalSpacing(4)
 
         lbl_k_company = QLabel("Company:")
-        lbl_k_company.setStyleSheet("color: #718096; font-size: 11px; font-weight: 600;")
+        lbl_k_company.setStyleSheet("background: transparent; color: #718096; font-size: 11px; font-weight: 600;")
         self.lbl_sim_brand = QLabel("--")
-        self.lbl_sim_brand.setStyleSheet("color: #E2E8F0; font-size: 12px; font-weight: 600;")
+        self.lbl_sim_brand.setStyleSheet("background: transparent; color: #E2E8F0; font-size: 12px; font-weight: 600;")
         grid_specs.addWidget(lbl_k_company, 0, 0)
         grid_specs.addWidget(self.lbl_sim_brand, 0, 1)
 
         lbl_k_model = QLabel("Model:")
-        lbl_k_model.setStyleSheet("color: #718096; font-size: 11px; font-weight: 600;")
+        lbl_k_model.setStyleSheet("background: transparent; color: #718096; font-size: 11px; font-weight: 600;")
         self.lbl_sim_model = QLabel("--")
-        self.lbl_sim_model.setStyleSheet("color: #00F0FF; font-size: 12px; font-weight: 600;")
+        self.lbl_sim_model.setStyleSheet("background: transparent; color: #00F0FF; font-size: 12px; font-weight: 600;")
         grid_specs.addWidget(lbl_k_model, 1, 0)
         grid_specs.addWidget(self.lbl_sim_model, 1, 1)
 
         lbl_k_bat = QLabel("Battery:")
-        lbl_k_bat.setStyleSheet("color: #718096; font-size: 11px; font-weight: 600;")
+        lbl_k_bat.setStyleSheet("background: transparent; color: #718096; font-size: 11px; font-weight: 600;")
         self.lbl_sim_battery = QLabel("--")
-        self.lbl_sim_battery.setStyleSheet("color: #34D399; font-size: 12px; font-weight: 600;")
+        self.lbl_sim_battery.setStyleSheet("background: transparent; color: #34D399; font-size: 12px; font-weight: 600;")
         grid_specs.addWidget(lbl_k_bat, 2, 0)
         grid_specs.addWidget(self.lbl_sim_battery, 2, 1)
 
         lbl_k_sys = QLabel("System:")
-        lbl_k_sys.setStyleSheet("color: #718096; font-size: 11px; font-weight: 600;")
+        lbl_k_sys.setStyleSheet("background: transparent; color: #718096; font-size: 11px; font-weight: 600;")
         self.lbl_sim_os = QLabel("--")
-        self.lbl_sim_os.setStyleSheet("color: #C084FC; font-size: 12px; font-weight: 600;")
+        self.lbl_sim_os.setStyleSheet("background: transparent; color: #C084FC; font-size: 12px; font-weight: 600;")
         grid_specs.addWidget(lbl_k_sys, 3, 0)
         grid_specs.addWidget(self.lbl_sim_os, 3, 1)
 
@@ -1685,9 +2474,9 @@ class ScrcpyApp(QMainWindow):
         adb_layout = QHBoxLayout(adb_bar)
         adb_layout.setContentsMargins(16, 12, 16, 12)
         
-        lbl_util = QLabel("ADB Server Utilities:")
-        lbl_util.setStyleSheet("font-weight: 600; color: #94A3B8;")
-        adb_layout.addWidget(lbl_util)
+        self.lbl_util = QLabel("ADB Server Utilities:")
+        self.lbl_util.setStyleSheet("background: transparent; font-weight: 600; color: #94A3B8;")
+        adb_layout.addWidget(self.lbl_util)
 
         btn_restart_adb = QPushButton(" Restart ADB Server")
         btn_restart_adb.setIcon(qta.icon("fa5s.redo-alt", color="#E2E8F0"))
@@ -1711,15 +2500,25 @@ class ScrcpyApp(QMainWindow):
     def _build_tab_video(self) -> QWidget:
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(16)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(12)
+
+        card_v = QFrame()
+        card_v.setProperty("class", "card")
+        c_layout = QVBoxLayout(card_v)
+        c_layout.setContentsMargins(16, 16, 16, 16)
+        c_layout.setSpacing(14)
+
+        lbl_v_title = QLabel("🎥 Video Stream & Encoder Settings")
+        lbl_v_title.setProperty("class", "section-title")
+        c_layout.addWidget(lbl_v_title)
 
         grid = QGridLayout()
         grid.setSpacing(14)
 
         # Bitrate
         lbl_bitrate = QLabel("Video Bitrate:")
-        lbl_bitrate.setStyleSheet("font-weight: 600;")
+        lbl_bitrate.setStyleSheet("background: transparent; font-weight: 600;")
         self.cb_bitrate = QComboBox()
         self.cb_bitrate.addItems(["2M (Light / Smooth)", "4M (Balanced)", "6M (Gaming Low-Latency)", "8M (Recommended)", "16M (Ultra High)", "32M (Lossless Max)"])
         self.cb_bitrate.setCurrentIndex(3)  # 8M
@@ -1728,7 +2527,7 @@ class ScrcpyApp(QMainWindow):
 
         # Resolution / Max Size
         lbl_res = QLabel("Max Resolution:")
-        lbl_res.setStyleSheet("font-weight: 600;")
+        lbl_res.setStyleSheet("background: transparent; font-weight: 600;")
         self.cb_res = QComboBox()
         self.cb_res.addItems(["Original (Native)", "1440 (2K)", "1080 (Full HD)", "1024 (Balanced Gaming)", "720 (Fast / Low Latency)", "480 (Performance)"])
         self.cb_res.setCurrentIndex(0)
@@ -1737,7 +2536,7 @@ class ScrcpyApp(QMainWindow):
 
         # Max FPS
         lbl_fps = QLabel("Target Frame Rate:")
-        lbl_fps.setStyleSheet("font-weight: 600;")
+        lbl_fps.setStyleSheet("background: transparent; font-weight: 600;")
         self.cb_fps = QComboBox()
         self.cb_fps.addItems(["Default", "30 FPS", "60 FPS (Silky)", "90 FPS (High Refresh)", "120 FPS (Ultra Gaming)"])
         self.cb_fps.setCurrentIndex(2)  # 60 FPS
@@ -1746,7 +2545,7 @@ class ScrcpyApp(QMainWindow):
 
         # Video Codec
         lbl_codec = QLabel("Video Codec:")
-        lbl_codec.setStyleSheet("font-weight: 600;")
+        lbl_codec.setStyleSheet("background: transparent; font-weight: 600;")
         self.cb_codec = QComboBox()
         self.cb_codec.addItems(["Default (Auto)", "h264 (Maximum Compatibility)", "h265 (High Efficiency HEVC)", "av1 (Next-Gen)"])
         self.cb_codec.setCurrentIndex(0)
@@ -1755,7 +2554,7 @@ class ScrcpyApp(QMainWindow):
 
         # Orientation
         lbl_orient = QLabel("Lock Orientation:")
-        lbl_orient.setStyleSheet("font-weight: 600;")
+        lbl_orient.setStyleSheet("background: transparent; font-weight: 600;")
         self.cb_orient = QComboBox()
         self.cb_orient.addItems(["Auto", "0° (Portrait)", "90° (Landscape)", "180° (Inverted)", "270° (Landscape)"])
         self.cb_orient.setCurrentIndex(0)
@@ -1764,13 +2563,14 @@ class ScrcpyApp(QMainWindow):
 
         # Video Source
         lbl_source = QLabel("Video Capture Source:")
-        lbl_source.setStyleSheet("font-weight: 600;")
+        lbl_source.setStyleSheet("background: transparent; font-weight: 600;")
         self.cb_source = QComboBox()
         self.cb_source.addItems(["Display (Device Screen)", "Camera (Webcam Mode)"])
         grid.addWidget(lbl_source, 2, 2)
         grid.addWidget(self.cb_source, 2, 3)
 
-        layout.addLayout(grid)
+        c_layout.addLayout(grid)
+        layout.addWidget(card_v)
         layout.addStretch(1)
         return widget
 
@@ -1803,7 +2603,7 @@ class ScrcpyApp(QMainWindow):
 
         # Ultra-Low Latency Mode
         self.chk_game_mode = QCheckBox("⚡ Ultra-Low Latency / Game Mode")
-        self.chk_game_mode.setStyleSheet("font-weight: 700; color: #00F0FF;")
+        self.chk_game_mode.setStyleSheet("background: transparent; font-weight: 700; color: #00F0FF;")
         self.chk_game_mode.setToolTip("Eliminates display buffer delay (--display-buffer=0) and tightens audio buffer to 20ms.")
         c_in_layout.addWidget(self.chk_game_mode)
 
@@ -1938,13 +2738,13 @@ class ScrcpyApp(QMainWindow):
         c_layout.setSpacing(12)
 
         self.chk_record = QCheckBox("Enable Screen Recording on Start")
-        self.chk_record.setStyleSheet("font-size: 14px; font-weight: 700; color: #EF4444;")
+        self.chk_record.setStyleSheet("background: transparent; font-size: 14px; font-weight: 700; color: #EF4444;")
         c_layout.addWidget(self.chk_record)
 
         # Format selector
         h_format = QHBoxLayout()
         lbl_format = QLabel("Container Format:")
-        lbl_format.setStyleSheet("font-weight: 600;")
+        lbl_format.setStyleSheet("background: transparent; font-weight: 600;")
         self.cb_record_format = QComboBox()
         self.cb_record_format.addItems(["MP4", "MKV"])
         h_format.addWidget(lbl_format)
@@ -1954,7 +2754,7 @@ class ScrcpyApp(QMainWindow):
 
         # Save Directory
         lbl_dir = QLabel("Save Destination Folder:")
-        lbl_dir.setStyleSheet("font-weight: 600;")
+        lbl_dir.setStyleSheet("background: transparent; font-weight: 600;")
         c_layout.addWidget(lbl_dir)
 
         h_dir = QHBoxLayout()
@@ -1996,9 +2796,9 @@ class ScrcpyApp(QMainWindow):
 
         # Header with Controls
         h_ctrl = QHBoxLayout()
-        lbl_console = QLabel("Activity Log & ADB Terminal")
-        lbl_console.setStyleSheet("font-weight: 700; color: #718096; font-size: 11px; letter-spacing: 0.5px;")
-        h_ctrl.addWidget(lbl_console)
+        self.lbl_console = QLabel("Activity Log & ADB Terminal")
+        self.lbl_console.setStyleSheet("background: transparent; font-weight: 700; color: #718096; font-size: 11px; letter-spacing: 0.5px;")
+        h_ctrl.addWidget(self.lbl_console)
 
         h_ctrl.addStretch(1)
 
@@ -2108,6 +2908,49 @@ class ScrcpyApp(QMainWindow):
         task.signals.devices_found.connect(self._on_devices_scanned)
         QThreadPool.globalInstance().start(task)
 
+    def _refresh_dual_status(self):
+        """Updates dual connection status (Wired USB vs Wireless Wi-Fi) with current theme styling."""
+        if not hasattr(self, 'lbl_status_wired') or not hasattr(self, 'lbl_status_wireless'):
+            return
+        devices = getattr(self, 'last_devices', [])
+        wired_devs = [d for d in devices if not d.get("is_wireless", False)]
+        wireless_devs = [d for d in devices if d.get("is_wireless", False)]
+        is_light = (getattr(self, 'current_theme', 'dark') == 'light')
+
+        # 1. Wired USB Status
+        if wired_devs:
+            w_dev = wired_devs[0]
+            self.lbl_status_wired.setText(f"🟢 USB: Connected ({w_dev['serial']})")
+            bg = "#DCFCE7" if is_light else "#0D281E"
+            fg = "#16A34A" if is_light else "#34D399"
+            bd = "#86EFAC" if is_light else "#10B981"
+        else:
+            self.lbl_status_wired.setText("⚪ USB: Not Connected / Unplugged")
+            bg = "#F1F5F9" if is_light else "#161B26"
+            fg = "#64748B" if is_light else "#94A3B8"
+            bd = "#CBD5E1" if is_light else "#2B3347"
+        self.lbl_status_wired.setStyleSheet(
+            f"background-color: {bg}; color: {fg}; border: 1px solid {bd}; "
+            "border-radius: 6px; padding: 4px 8px; font-weight: 600; font-size: 11px;"
+        )
+
+        # 2. Wireless Wi-Fi Status
+        if wireless_devs:
+            wl_dev = wireless_devs[0]
+            self.lbl_status_wireless.setText(f"🟢 Wi-Fi: Connected ({wl_dev['serial']})")
+            bg = "#DCFCE7" if is_light else "#0D281E"
+            fg = "#16A34A" if is_light else "#34D399"
+            bd = "#86EFAC" if is_light else "#10B981"
+        else:
+            self.lbl_status_wireless.setText("🔴 Wi-Fi: Not Configured / Disconnected")
+            bg = "#FEE2E2" if is_light else "#2D1418"
+            fg = "#DC2626" if is_light else "#F87171"
+            bd = "#FCA5A5" if is_light else "#581C22"
+        self.lbl_status_wireless.setStyleSheet(
+            f"background-color: {bg}; color: {fg}; border: 1px solid {bd}; "
+            "border-radius: 6px; padding: 4px 8px; font-weight: 600; font-size: 11px;"
+        )
+
     @Slot(list)
     def _on_devices_scanned(self, devices: List[Dict]):
         self._is_scanning = False
@@ -2122,8 +2965,7 @@ class ScrcpyApp(QMainWindow):
 
         if not devices:
             self.cb_devices.addItem("No Device Connected")
-            self.lbl_status.setText("🔴 No Device")
-            self.lbl_status.setStyleSheet("background-color: #361B1F; color: #F87171; border-radius: 12px; padding: 4px 12px; font-weight: 600;")
+            self._set_status_pill("🔴 No Device", "danger")
             self.selected_serial = None
         else:
             selected_idx = 0
@@ -2147,46 +2989,12 @@ class ScrcpyApp(QMainWindow):
             self.selected_serial = active_dev["serial"]
             
             status_text = f"🟢 {'Wi-Fi' if active_dev['is_wireless'] else 'USB'} Online"
-            self.lbl_status.setText(status_text)
-            self.lbl_status.setStyleSheet("background-color: #123026; color: #34D399; border-radius: 12px; padding: 4px 12px; font-weight: 600;")
+            self._set_status_pill(status_text, "success")
 
         self.cb_devices.blockSignals(False)
 
-        # ----------------------------------------------------------------------
-        # Update Dual Connection Status (Wired vs Wireless)
-        # ----------------------------------------------------------------------
-        wired_devs = [d for d in devices if not d.get("is_wireless", False)]
-        wireless_devs = [d for d in devices if d.get("is_wireless", False)]
-
-        # 1. Wired USB Status
-        if wired_devs:
-            w_dev = wired_devs[0]
-            self.lbl_status_wired.setText(f"🟢 USB: Connected ({w_dev['serial']})")
-            self.lbl_status_wired.setStyleSheet(
-                "background-color: #0D281E; color: #34D399; border: 1px solid #10B981; "
-                "border-radius: 6px; padding: 4px 8px; font-weight: 600; font-size: 11px;"
-            )
-        else:
-            self.lbl_status_wired.setText("⚪ USB: Not Connected / Unplugged")
-            self.lbl_status_wired.setStyleSheet(
-                "background-color: #161B26; color: #94A3B8; border: 1px solid #2B3347; "
-                "border-radius: 6px; padding: 4px 8px; font-weight: 600; font-size: 11px;"
-            )
-
-        # 2. Wireless Wi-Fi Status
-        if wireless_devs:
-            wl_dev = wireless_devs[0]
-            self.lbl_status_wireless.setText(f"🟢 Wi-Fi: Connected ({wl_dev['serial']})")
-            self.lbl_status_wireless.setStyleSheet(
-                "background-color: #0D281E; color: #34D399; border: 1px solid #10B981; "
-                "border-radius: 6px; padding: 4px 8px; font-weight: 600; font-size: 11px;"
-            )
-        else:
-            self.lbl_status_wireless.setText("🔴 Wi-Fi: Not Configured / Disconnected")
-            self.lbl_status_wireless.setStyleSheet(
-                "background-color: #2D1418; color: #F87171; border: 1px solid #581C22; "
-                "border-radius: 6px; padding: 4px 8px; font-weight: 600; font-size: 11px;"
-            )
+        self.last_devices = devices
+        self._refresh_dual_status()
 
         # 3. Update 3D Phone Simulation & Hardware Information
         if devices and self.selected_serial:
@@ -2340,6 +3148,7 @@ class ScrcpyApp(QMainWindow):
 
     @Slot(int)
     def _on_scrcpy_terminated(self, return_code: int):
+        self._is_camera_mode = False
         self.remote_snap_timer.stop()
         self.btn_start.setEnabled(True)
         self.btn_record_mirror.setEnabled(True)
@@ -2605,6 +3414,24 @@ class ScrcpyApp(QMainWindow):
 
     def action_manual_disconnect(self):
         self.open_manual_wifi_dialog()
+
+    def open_manual_wifi_dialog(self):
+        """Opens the user-friendly Wireless Manager Setup Dialog."""
+        dlg = WirelessManagerDialog(
+            core=self.core,
+            default_ip=getattr(self, 'last_target_ip', "") or "",
+            parent=self,
+            on_connected_cb=self._on_wireless_connected_callback
+        )
+        dlg.exec()
+
+    def _on_wireless_connected_callback(self, serial: Optional[str]):
+        """Callback when a device is successfully paired or connected in the dialog."""
+        self.scan_devices()
+        if serial:
+            self.selected_serial = serial
+            self.last_target_ip = serial.split(":")[0] if ":" in serial else serial
+            self.log(f"Wireless target activated: {serial}", "SUCCESS")
 
     def action_restart_adb(self):
         self.log("Restarting ADB Server...", "WARN")
